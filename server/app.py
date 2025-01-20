@@ -46,7 +46,32 @@ class PlantByID(Resource):
     def get(self, id):
         plant = Plant.query.filter_by(id=id).first().to_dict()
         return make_response(jsonify(plant), 200)
-
+    
+    def patch(self, id):
+        plant = db.session.get(Plant,id)
+        data = request.get_json()
+        for attr, value in data.items():
+            if hasattr(plant, attr):
+                setattr(plant, attr, value)
+            else:
+                make_response({'error': f'invalid attribute {attr}'}, 400)
+        db.session.add(plant)
+        db.session.commit()
+        
+        response =make_response(
+            plant.to_dict(),
+            200
+        )
+        
+        return response
+    
+    def delete(self, id):
+        plant = db.session.get(Plant,id)
+        if not plant:
+            return make_response({'error': "plant not found"}, 404)
+        db.session.delete(plant)
+        db.session.commit()
+        return make_response('no content', 204)
 
 api.add_resource(PlantByID, '/plants/<int:id>')
 
